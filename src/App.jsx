@@ -16,7 +16,7 @@ import Prescriptions from './pages/Prescriptions';
 import BookAppointment from './pages/BookAppointment';
 import About from './pages/About';
 import ContactUs from './pages/ContactUs';
-import Payment from './pages/payment';
+import Payment from './pages/Payment';
 import { isAuthenticated, getCurrentUser } from './utils/auth';
 import './styles/backgrounds.css';
 import MyAppointments from './pages/MyAppointments';
