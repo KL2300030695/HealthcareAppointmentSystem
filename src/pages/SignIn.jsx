@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { signIn, USER_TYPES } from '../utils/auth';
+import { signIn } from '../utils/auth';
 
 const SignIn = () => {
   const navigate = useNavigate();
@@ -8,22 +8,26 @@ const SignIn = () => {
     email: '',
     password: '',
     role: 'patient',
-    city: 'Mumbai'
+    city: 'Mumbai',
+    captchaInput: ''
   });
   const [error, setError] = useState('');
+  const [captchaQuestion, setCaptchaQuestion] = useState('');
+  const [captchaAnswer, setCaptchaAnswer] = useState(null);
 
-  const cities = [
-    'Mumbai',
-    'Delhi',
-    'Bangalore',
-    'Hyderabad',
-    'Chennai',
-    'Kolkata',
-    'Pune',
-    'Ahmedabad',
-    'Jaipur',
-    'Lucknow'
-  ];
+  const cities = ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Lucknow'];
+
+  // Generate a simple math question
+  const generateCaptcha = () => {
+    const a = Math.floor(Math.random() * 10);
+    const b = Math.floor(Math.random() * 10);
+    setCaptchaQuestion(`${a} + ${b} = ?`);
+    setCaptchaAnswer(a + b);
+  };
+
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -36,15 +40,18 @@ const SignIn = () => {
     e.preventDefault();
     setError('');
 
+    if (parseInt(formData.captchaInput) !== captchaAnswer) {
+      setError('Invalid CAPTCHA answer. Please try again.');
+      generateCaptcha(); // regenerate on failure
+      return;
+    }
+
     try {
       const user = signIn(formData.email, formData.password, formData.role);
-      
-      // Store city in localStorage if user is a patient
       if (formData.role === 'patient') {
         localStorage.setItem('userCity', formData.city);
       }
-      
-      // Redirect based on user type
+
       switch (user.type) {
         case 'doctor':
           navigate('/doctor/dashboard');
@@ -85,24 +92,22 @@ const SignIn = () => {
                 {error}
               </div>
             )}
-            
+
             <div>
               <label htmlFor="role" className="block text-sm font-medium text-gray-700">
                 I am a
               </label>
-              <div className="mt-1">
-                <select
-                  id="role"
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                >
-                  <option value="patient">Patient</option>
-                  <option value="doctor">Doctor</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
+              <select
+                id="role"
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+              >
+                <option value="patient">Patient</option>
+                <option value="doctor">Doctor</option>
+                <option value="admin">Admin</option>
+              </select>
             </div>
 
             {formData.role === 'patient' && (
@@ -110,21 +115,17 @@ const SignIn = () => {
                 <label htmlFor="city" className="block text-sm font-medium text-gray-700">
                   Select your city
                 </label>
-                <div className="mt-1">
-                  <select
-                    id="city"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                  >
-                    {cities.map((city) => (
-                      <option key={city} value={city}>
-                        {city}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <select
+                  id="city"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                >
+                  {cities.map((city) => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
               </div>
             )}
 
@@ -132,61 +133,61 @@ const SignIn = () => {
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
               </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                value={formData.email}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+              />
             </div>
 
             <div>
-              <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <div className="text-sm">
-                  <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
-                    Forgot your password?
-                  </Link>
-                </div>
-              </div>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                />
-              </div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={formData.password}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+              />
+            </div>
+
+            {/* Simple CAPTCHA */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                CAPTCHA: {captchaQuestion}
+              </label>
+              <input
+                name="captchaInput"
+                type="text"
+                value={formData.captchaInput}
+                onChange={handleChange}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"
+                placeholder="Answer"
+              />
             </div>
 
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
               >
                 Sign in
               </button>
             </div>
 
-            <div className="flex items-center justify-center">
-              <div className="text-sm">
-                <span className="text-gray-500">Don't have an account?</span>{' '}
-                <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-500">
-                  Sign up
-                </Link>
-              </div>
+            <div className="text-sm text-center">
+              <span className="text-gray-500">Don't have an account?</span>{' '}
+              <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-500">
+                Sign up
+              </Link>
             </div>
           </form>
         </div>
@@ -195,4 +196,4 @@ const SignIn = () => {
   );
 };
 
-export default SignIn; 
+export default SignIn;
